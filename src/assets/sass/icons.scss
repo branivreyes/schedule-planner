@@ -1,0 +1,19 @@
+@mixin setIcon($iconName) {
+    -webkit-mask-image: url('/icons/' + $iconName);
+    mask-image: url('/icons/' + $iconName);
+}
+
+.icon {
+    width: 18px;
+    height: 18px;
+
+    &.x-mark {
+        @include setIcon('x-mark.svg');
+    }
+    &.plus {
+        @include setIcon('plus.svg');
+    }
+    &.plus-circle {
+        @include setIcon('plus-circle.svg');
+    }
+}
