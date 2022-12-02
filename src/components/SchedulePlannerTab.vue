@@ -1,6 +1,6 @@
 <template>
     <a
-        class="universal-planner-tab" 
+        class="schedule-planner-tab" 
         draggable="true"
         :class="tabClasses" 
         :ondrag="onDrag"
@@ -9,7 +9,7 @@
     >
         {{ props.name }}
         <TheIcon
-            class="universal-planner-tab__closeIcon" 
+            class="schedule-planner-tab__closeIcon" 
             :icon="Icon.X_MARK"
             @click.stop="onClose"
         />
@@ -62,7 +62,7 @@ function onDragEnd(e: DragEvent) {
 </script>
 
 <style scoped lang="scss">
-.universal-planner-tab {
+.schedule-planner-tab {
     @apply tab;
     @apply tab-lg;
     @apply tab-lifted;

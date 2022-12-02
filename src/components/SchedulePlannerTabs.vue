@@ -1,9 +1,9 @@
 <template>
     <div
-        class="universal-planner-tabs"
+        class="schedule-planner-tabs"
     >
         <div
-            class="universal-planner-tabs__container tabs"
+            class="schedule-planner-tabs__container tabs"
             ref="tabsParent"
         >
             <SchedulePlannerTab
@@ -20,7 +20,7 @@
                 @on-drag-end="onDragEnd($event, tab)"
             />
             <a
-                class="universal-planner-tabs__addTab"
+                class="schedule-planner-tabs__addTab"
                 @click="addSearchTab"
             >
                 <i class="icon plus bg-gray-500"></i>
@@ -69,7 +69,7 @@ const { onDrag, onDragEnd, onDragStart } = useDraggableTabs(tabs, setSelectedTab
 </script>
 
 <style lang="scss" scoped>
-.universal-planner-tabs {
+.schedule-planner-tabs {
     @apply bg-slate-100;
     @apply border;
     @apply rounded-tl-lg;

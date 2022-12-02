@@ -1,5 +1,5 @@
 <template>
-    <div class="universal-planner">
+    <div class="schedule-planner">
         <SchedulePlannerTabs />
         <div class="content"></div>
     </div>
@@ -10,7 +10,7 @@ import SchedulePlannerTabs from './SchedulePlannerTabs.vue';
 </script>
 
 <style scoped lang="scss">
-.universal-planner {
+.schedule-planner {
     @apply w-full;
     @apply h-full;
     @apply rounded-lg;
