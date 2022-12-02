@@ -25,7 +25,11 @@ export function useDraggableTabs(tabs: Ref<Tab[]>, setSelectedTab: (tab: Tab) =>
 
         setSelectedTab(tab);
         
-        e.dataTransfer?.setDragImage(document.createElement('DIV'), 0, 0);
+        const img = new Image();
+
+        img.src = "empty.svg";
+
+        e.dataTransfer?.setDragImage(img, 0, 0);
         
         draggingTabDomRect = draggingTabElement.getBoundingClientRect();
         
