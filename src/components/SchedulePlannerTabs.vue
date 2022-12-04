@@ -82,7 +82,6 @@ const { onDrag, onDragStart, onDragEnd } = useDraggableTabs(tabs, setSelectedTab
     @apply rounded-tr-lg;
     @apply border-b-0;
     
-    
     &__container {
         margin-top: -1px;
         margin-left: -1px;
@@ -91,10 +90,10 @@ const { onDrag, onDragStart, onDragEnd } = useDraggableTabs(tabs, setSelectedTab
         
         &.tabs::before {
             content: '';
-            position: absolute;
-            height: 100%;
             z-index: 2;
             width: 1px;
+            @apply absolute;
+            @apply h-full;
             @apply border-l;
             @apply rounded-tl-lg;
         }
@@ -114,9 +113,9 @@ const { onDrag, onDragStart, onDragEnd } = useDraggableTabs(tabs, setSelectedTab
         
         &:hover::before {
             content: "";
-            position: absolute;
             width: 24px;
             height: 24px;
+            @apply absolute;
             @apply rounded;
             @apply bg-gray-300;
         }
