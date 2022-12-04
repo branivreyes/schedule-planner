@@ -1,170 +1,187 @@
 import { Ref } from 'vue';
-import Tab from '@classes/Tab';
 
-export function useDraggableTabs(tabs: Ref<Tab[]>, setSelectedTab: (tab: Tab) => void) {
+export function useDraggableTabs<T>(tabs: Ref<T[]>, setSelectedTab: (tab: T) => void, getMaxXPosition: () => number) {
     let offsetX = 0;
-    let ghostTabIndex: number | undefined;
-    let ghostTabs: HTMLElement[] = [];
     let draggingTabElement: HTMLAnchorElement | undefined;
     let draggingTabDomRect: DOMRect;
-    let tabBehindIndex: number;
-    let draggingTabStylesSetted = false;
+    let ghostTabIndex: number;
     let tabBehind: HTMLElement | undefined;
+    let draggingTabIndex: number;
     let firstIteration = true;
-
-    function onDragStart(e: DragEvent, tab: Tab) {
+    let ghostTabs: HTMLElement[] = [];
+    let maxXPosition: number;
+    
+    function onDragStart(e: DragEvent, tab: T) {
         draggingTabElement = e.target as HTMLAnchorElement;
         
-        if (!draggingTabElement?.dataset?.tabid) {
-            e.preventDefault();
-            draggingTabElement = undefined;
-            return;
-        }
+        draggingTabIndex = Number(draggingTabElement?.dataset?.tabindex);
+        
+        if (isNaN(draggingTabIndex))
+            return e.preventDefault();
+        
+        ghostTabIndex = draggingTabIndex;
 
         const clientX = e.clientX;
 
         setSelectedTab(tab);
         
-        const img = new Image();
-
-        img.src = "empty.svg";
-
-        e.dataTransfer?.setDragImage(img, 0, 0);
+        setDragImage(e);
         
         draggingTabDomRect = draggingTabElement.getBoundingClientRect();
         
         offsetX = clientX - draggingTabDomRect.left;
-    }
 
+        maxXPosition = getMaxXPosition();
+        
+        moveDraggingTab(clientX);
+
+        setDraggingTabStyles();
+        
+        insertNewGhostTab();
+    }
+    
     function onDrag(e: DragEvent) {
         const clientX = e.clientX;
 
         if (clientX === 0) return;
-        
-        if (firstIteration) {
-            insertNewGhostTab(0); 
-            ghostTabIndex = Number(draggingTabElement?.dataset.tabindex) + 1;
-        }
+
+        if (firstIteration)
+            draggingTabElement!.style.pointerEvents = 'none';
 
         firstIteration = false;
-        
+
         moveDraggingTab(clientX);
-
+        
         tabBehind = getTabBehind(clientX);
-
-        if (!tabBehind.dataset.tabid) return;
         
-        const tabBehindMiddleX = getTabMiddleX(tabBehind);
+        if (!tabBehind) return;
 
-        tabBehindIndex = Number(tabBehind.dataset.tabindex);
-        
-        let newGhostTabIndex = tabBehindIndex;
-
-        if (clientX >= tabBehindMiddleX)
-            newGhostTabIndex++;
+        const newGhostTabIndex = getNewGhostTabIndex(
+            clientX,
+            Number(tabBehind.dataset.tabindex),
+            getTabMiddleX(tabBehind)
+        );
         
         if (ghostTabIndex === newGhostTabIndex) return;
-
+        
         insertNewGhostTab(newGhostTabIndex);
-
-        ghostTabIndex = newGhostTabIndex;
     }
 
-    function onDragEnd(e: DragEvent, tab: Tab) {
-        const ghostTab = ghostTabs.pop();
+    function onDragEnd(tab: T) {
+        removeLastGhostTab(false);
         
-        ghostTab?.remove();
-        
-        const tabIndex = Number(draggingTabElement?.dataset.tabindex);
-
-        if (ghostTabIndex! > tabIndex)
-            ghostTabIndex!--;
-
         draggingTabElement?.removeAttribute('style');
 
-        if (tabIndex !== ghostTabIndex && ghostTabIndex !== undefined) {
-            tabs.value.splice(tabIndex, 1);
+        if (draggingTabIndex !== ghostTabIndex && ghostTabIndex !== undefined) {
+            tabs.value.splice(draggingTabIndex, 1);
             tabs.value.splice(ghostTabIndex!, 0, tab);
         }
         
-        draggingTabStylesSetted = false;
-        draggingTabElement = undefined;
-        ghostTabIndex = undefined;
-        tabBehind = undefined;
         firstIteration = true;
+        ghostTabs = [];
+    }
+    
+    function getNewGhostTabIndex(
+        clientX:number,
+        tabBehindIndex: number,
+        tabBehindMiddleX: number
+    ) {
+        let newGhostTabIndex = tabBehindIndex;
+        
+        if (clientX >= tabBehindMiddleX && newGhostTabIndex < draggingTabIndex)
+            newGhostTabIndex++;
+
+        if (clientX < tabBehindMiddleX && newGhostTabIndex > draggingTabIndex)
+            newGhostTabIndex--;
+        
+        return newGhostTabIndex;
     }
 
-    function insertNewGhostTab(targetIndex: number) {
+    function insertNewGhostTab(newGhostTabIndex?: number) {
         removeLastGhostTab();
 
         const ghostTab = createNewGhostTab();
-        
-        if (firstIteration)
-            draggingTabElement?.before(ghostTab);
-        
-        else if (tabBehindIndex < targetIndex)
-            tabBehind?.after(ghostTab);
-            
-        else
-            tabBehind?.before(ghostTab);
 
-        if (ghostTabIndex)
+        if (newGhostTabIndex === undefined) 
+            draggingTabElement!.before(ghostTab);
+
+        else if (newGhostTabIndex > ghostTabIndex)
+            tabBehind!.after(ghostTab);
+
+        else
+            tabBehind!.before(ghostTab);
+
+        if (newGhostTabIndex !== undefined) {
             ghostTab.getBoundingClientRect();
 
-        ghostTab.style.width = draggingTabDomRect.width + 'px';
+            ghostTabIndex = newGhostTabIndex;
+        }
 
+        ghostTab.style.width = draggingTabDomRect.width + 'px';
+        
         ghostTabs.push(ghostTab);
     }
-
-    function createNewGhostTab() {
-        const ghostTab = document.createElement('DIV') as HTMLDivElement;
-
-        ghostTab.classList.add('h-12');
-        ghostTab.style.width = '0px';
-        ghostTab.style.transition = 'width .2s linear';
-        ghostTab.style.willChange = 'width';
-
-        return ghostTab;
+    
+    function setDraggingTabStyles() {
+        const style = draggingTabElement!.style;
+        style.position = 'absolute';
+        style.zIndex = '1';
+    }
+    
+    function setDragImage(e: DragEvent) {
+        const img = new Image();
+        img.src = 'empty.svg';
+        e.dataTransfer?.setDragImage(img, 0, 0);
     }
 
     function getTabMiddleX(element: HTMLElement) {
-        const { left: tabBehindLeft, width: tabBehindWidth } = element.getBoundingClientRect();
-        
-        return tabBehindLeft + (tabBehindWidth / 2);
-    }
-
-    function getTabBehind(clientX: number) {
-        return document.elementFromPoint(clientX, draggingTabDomRect.top) as HTMLElement;
+        const { left, width } = element.getBoundingClientRect();
+        return left + (width / 2);
     }
 
     function moveDraggingTab(clientX: number) {
         const draggingTabStyle = draggingTabElement!.style;
-
-        if (clientX > offsetX)
-            draggingTabStyle.left = Math.round(clientX - offsetX) + 'px';
-
-        if (draggingTabStylesSetted) return;
+        const virtualTab = clientX + (draggingTabDomRect.width - offsetX);
         
-        draggingTabStyle.position = 'absolute';
-        draggingTabStyle.zIndex = '1';
-        draggingTabStyle.pointerEvents = 'none';
+        if (virtualTab > maxXPosition || clientX <= offsetX) return;
         
-        draggingTabStylesSetted = true;
+        draggingTabStyle.left = Math.round(clientX - offsetX) + 'px';
     }
 
-    function removeLastGhostTab() {
+    function createNewGhostTab() {
+        const ghostTab = document.createElement('DIV') as HTMLDivElement;
+        ghostTab.classList.add('h-12');
+        
+        const style = ghostTab.style;
+        style.width = '0px';
+        style.transition = 'width .2s linear';
+        style.willChange = 'width';
+
+        return ghostTab;
+    }
+
+    function getTabBehind(clientX: number) {
+        const elementBehind = document.elementFromPoint(clientX, draggingTabDomRect.top) as HTMLElement;
+        
+        return elementBehind?.dataset?.tabindex ? elementBehind : undefined;
+    }
+
+    function removeLastGhostTab(withAnimation = true) {
         const lastGhostTab = ghostTabs.pop();
 
         if (!lastGhostTab) return;
 
-        lastGhostTab.style.width = '0px';
-        
-        const removeElement = () => {
-            lastGhostTab.removeEventListener('transitionend', removeElement);
-            lastGhostTab.remove();
-        };
+        if (withAnimation) {
+            lastGhostTab.style.width = '0px';
 
-        lastGhostTab.addEventListener("transitionend", removeElement);
+            const removeElement = () => {
+                lastGhostTab.removeEventListener('transitionend', removeElement);
+                lastGhostTab.remove();
+            };
+
+            lastGhostTab.addEventListener('transitionend', removeElement);
+        } else
+            lastGhostTab.remove();
     }
     
     return {

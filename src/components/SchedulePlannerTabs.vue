@@ -11,17 +11,17 @@
                 :name="tab.name"
                 :key="tab.id"
                 :is-active="selectedTab === tab"
-                :data-tabId="tab.id"
                 :data-tabIndex="index"
                 @click="onTabClick(tab)"
                 @on-close="closeTab(index, tab)"
                 @on-drag="onDrag"
                 @on-drag-start="onDragStart($event, tab)"
-                @on-drag-end="onDragEnd($event, tab)"
+                @on-drag-end="onDragEnd(tab)"
             />
             <a
                 class="schedule-planner-tabs__addTab"
                 @click="addSearchTab"
+                ref="addSearchTabElement"
             >
                 <i class="icon plus bg-gray-500"></i>
             </a>
@@ -39,10 +39,11 @@ const tabs = ref<Tab[]>([
     new Tab('Search tab'),
     new Tab('Lorem Ipsum'),
     new Tab('Baz Lorem'),
-    new Tab('Foo'),
-    new Tab('Bar'),
+    new Tab('Foo Foo'),
+    new Tab('Bar Bar'),
 ]);
 let selectedTab = ref(tabs.value[0]);
+const addSearchTabElement = ref<HTMLAnchorElement | null>(null);
 
 function onTabClick(tab: Tab) {
     setSelectedTab(tab);
@@ -65,7 +66,12 @@ function setSelectedTab(tab: Tab) {
     selectedTab.value = tab;
 }
 
-const { onDrag, onDragEnd, onDragStart } = useDraggableTabs(tabs, setSelectedTab);
+function getMaxXposition() {
+    const htmlElement = addSearchTabElement.value!;
+    return htmlElement.getBoundingClientRect().left - parseInt(window.getComputedStyle(htmlElement).marginLeft);
+}
+
+const { onDrag, onDragStart, onDragEnd } = useDraggableTabs(tabs, setSelectedTab, getMaxXposition);
 </script>
 
 <style lang="scss" scoped>
