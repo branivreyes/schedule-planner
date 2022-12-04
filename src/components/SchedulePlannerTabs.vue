@@ -42,7 +42,7 @@ const tabs = ref<Tab[]>([
     new Tab('Foo Foo'),
     new Tab('Bar Bar'),
 ]);
-let selectedTab = ref(tabs.value[0]);
+const selectedTab = ref(tabs.value[0]);
 const addSearchTabElement = ref<HTMLAnchorElement | null>(null);
 
 function onTabClick(tab: Tab) {
