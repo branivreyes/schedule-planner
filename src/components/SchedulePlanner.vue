@@ -1,7 +1,7 @@
 <template>
     <div class="schedule-planner">
         <SchedulePlannerTabs />
-        <div class="content"></div>
+        <div class="schedule-planner__content"></div>
     </div>
 </template>
 
@@ -18,14 +18,15 @@ import SchedulePlannerTabs from './SchedulePlannerTabs.vue';
     @apply flex;
     @apply flex-col;
     @apply shadow-md;
+
+    &__content {
+        margin-top: -1px;
+        @apply border;
+        @apply rounded-bl-lg; 
+        @apply rounded-br-lg; 
+        @apply flex-1;
+        @apply bg-white;
+    }
 }
 
-.content {
-    margin-top: -1px;
-    @apply border;
-    @apply rounded-bl-lg; 
-    @apply rounded-br-lg; 
-    @apply flex-1;
-    @apply bg-white;
-}
 </style>
