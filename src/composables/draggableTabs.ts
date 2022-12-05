@@ -79,6 +79,8 @@ export function useDraggableTabs<T>(tabs: Ref<T[]>, setSelectedTab: (tab: T) => 
         
         firstIteration = true;
         ghostTabs = [];
+        draggingTabElement = undefined;
+        tabBehind = undefined;
     }
     
     function getNewGhostTabIndex(
