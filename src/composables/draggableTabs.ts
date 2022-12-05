@@ -172,8 +172,12 @@ export function useDraggableTabs<T>(tabs: Ref<T[]>, setSelectedTab: (tab: T) => 
         const lastGhostTab = ghostTabs.pop();
 
         if (!lastGhostTab) return;
-
+        
         if (withAnimation) {
+            const width = window.getComputedStyle(lastGhostTab).width;
+
+            if (width === '0px') return lastGhostTab.remove();
+
             lastGhostTab.style.width = '0px';
 
             const removeElement = () => {
