@@ -4,20 +4,21 @@
     >
         <div
             class="schedule-planner-tabs__container tabs"
-            ref="tabsParent"
         >
-            <SchedulePlannerTab
-                v-for="(tab, index) in tabs"
-                :name="tab.name"
-                :key="tab.id"
-                :is-active="selectedTab === tab"
-                :data-tabIndex="index"
-                @click="onTabClick(tab)"
-                @on-close="closeTab(index, tab)"
-                @on-drag="onDrag"
-                @on-drag-start="onDragStart($event, tab)"
-                @on-drag-end="onDragEnd(tab)"
-            />
+            <TransitionGroup name="tabs">
+                <SchedulePlannerTab
+                    v-for="(tab, index) in tabs"
+                    :name="tab.name"
+                    :key="tab.id"
+                    :is-active="selectedTab === tab"
+                    :data-tabIndex="index"
+                    @click="onTabClick(tab)"
+                    @on-close="closeTab(index, tab)"
+                    @on-drag="onDrag"
+                    @on-drag-start="onDragStart($event, tab)"
+                    @on-drag-end="onDragEnd(tab)"
+                />
+            </TransitionGroup>
             <a
                 class="schedule-planner-tabs__addTab"
                 @click="addSearchTab"
@@ -53,13 +54,15 @@ function closeTab(index: number, tab: Tab) {
     if (tabs.value.length === 1) return;   
 
     tabs.value.splice(index, 1);
-
+    
     if (tab === selectedTab.value)
-        selectedTab.value = tabs.value[0];
+        selectedTab.value = tabs.value[index] || tabs.value[index - 1];
 }
 
 function addSearchTab() {
-    tabs.value.push(new Tab('Search tab'));
+    const newTab = new Tab('Search tab');
+    setSelectedTab(newTab);
+    tabs.value.push(newTab);
 }
 
 function setSelectedTab(tab: Tab) {
@@ -120,5 +123,43 @@ const { onDrag, onDragStart, onDragEnd } = useDraggableTabs(tabs, setSelectedTab
             @apply bg-gray-300;
         }
     }
+}
+
+.tabs-enter-active {
+    animation: 250ms linear 0s 1 enter;
+}
+
+.tabs-leave-active {
+    animation: 250ms linear 0s 1 leave;
+}
+
+@keyframes enter {
+  0% {
+    max-width: 0;
+    @apply px-0;
+    @apply opacity-0;
+  }
+  50% {
+    max-width: 900px;
+    @apply px-5;
+    @apply opacity-0;
+  }
+  100% {
+    @apply opacity-100;
+  }
+}
+
+@keyframes leave {
+  0% {
+    @apply opacity-100;
+  }
+  50% {
+    @apply opacity-0;
+  }
+  100% {
+    max-width: 0;
+    @apply opacity-0;
+    @apply px-0;
+  }
 }
 </style>
