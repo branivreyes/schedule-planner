@@ -4,6 +4,7 @@
     >
         <div
             class="schedule-planner-tabs__container tabs"
+            ref="tabsContainer"
         >
             <TransitionGroup name="tabs">
                 <SchedulePlannerTab
@@ -40,11 +41,11 @@ const tabs = ref<Tab[]>([
     new Tab('Search tab'),
     new Tab('Lorem Ipsum'),
     new Tab('Baz Lorem'),
-    new Tab('Foo Foo'),
-    new Tab('Bar Bar'),
+    new Tab('Foo Foo Lorem Baz Bar'),
 ]);
 const selectedTab = ref(tabs.value[0]);
 const addSearchTabElement = ref<HTMLAnchorElement | null>(null);
+const tabsContainer = ref<HTMLDivElement | null>(null);
 
 function onTabClick(tab: Tab) {
     setSelectedTab(tab);
@@ -61,8 +62,14 @@ function closeTab(index: number, tab: Tab) {
 
 function addSearchTab() {
     const newTab = new Tab('Search tab');
+
     setSelectedTab(newTab);
+
     tabs.value.push(newTab);
+
+    setTimeout(() => {
+        tabsContainer.value!.scrollLeft = tabsContainer.value!.scrollWidth;
+    }, 125);
 }
 
 function setSelectedTab(tab: Tab) {
@@ -74,7 +81,11 @@ function getMaxXposition() {
     return htmlElement.getBoundingClientRect().left - parseInt(window.getComputedStyle(htmlElement).marginLeft);
 }
 
-const { onDrag, onDragStart, onDragEnd } = useDraggableTabs(tabs, setSelectedTab, getMaxXposition);
+function getScrollPosition() {
+    return tabsContainer.value?.scrollLeft || 0;    
+}
+
+const { onDrag, onDragStart, onDragEnd } = useDraggableTabs(tabs, setSelectedTab, getMaxXposition, getScrollPosition);
 </script>
 
 <style lang="scss" scoped>
@@ -88,8 +99,27 @@ const { onDrag, onDragStart, onDragEnd } = useDraggableTabs(tabs, setSelectedTab
     &__container {
         margin-top: -1px;
         margin-left: -1px;
+        flex-wrap: unset !important;
         @apply relative;
         @apply overflow-hidden;
+        @apply max-w-full;
+        @apply overflow-x-auto;
+        
+        &::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        &::-webkit-scrollbar-track {
+            @apply bg-slate-100;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            @apply bg-gray-300;
+        }
+
+        &::-webkit-scrollbar-thumb:hover {
+            @apply bg-gray-400;
+        }
         
         &.tabs::before {
             content: '';

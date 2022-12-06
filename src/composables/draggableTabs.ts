@@ -1,6 +1,11 @@
 import { Ref } from 'vue';
 
-export function useDraggableTabs<T>(tabs: Ref<T[]>, setSelectedTab: (tab: T) => void, getMaxXPosition: () => number) {
+export function useDraggableTabs<T>(
+    tabs: Ref<T[]>,
+    setSelectedTab: (tab: T) => void,
+    getMaxXPosition: () => number,
+    getScrollPosition: () => number
+) {
     let offsetX = 0;
     let draggingTabElement: HTMLAnchorElement | undefined;
     let draggingTabDomRect: DOMRect;
@@ -119,7 +124,7 @@ export function useDraggableTabs<T>(tabs: Ref<T[]>, setSelectedTab: (tab: T) => 
             ghostTabIndex = newGhostTabIndex;
         }
 
-        ghostTab.style.width = draggingTabDomRect.width + 'px';
+        ghostTab.style.minWidth = Math.round(draggingTabDomRect.width) + 'px';
         
         ghostTabs.push(ghostTab);
     }
@@ -147,7 +152,7 @@ export function useDraggableTabs<T>(tabs: Ref<T[]>, setSelectedTab: (tab: T) => 
         
         if (virtualTab > maxXPosition || clientX <= offsetX) return;
         
-        draggingTabStyle.left = Math.round(clientX - offsetX) + 'px';
+        draggingTabStyle.left = Math.round((clientX - offsetX) + getScrollPosition()) + 'px';
     }
 
     function createNewGhostTab() {
@@ -155,9 +160,9 @@ export function useDraggableTabs<T>(tabs: Ref<T[]>, setSelectedTab: (tab: T) => 
         ghostTab.classList.add('h-12');
         
         const style = ghostTab.style;
-        style.width = '0px';
-        style.transition = 'width .2s linear';
-        style.willChange = 'width';
+        style.minWidth = '0px';
+        style.transition = 'min-width .2s linear';
+        style.willChange = 'min-width';
 
         return ghostTab;
     }
@@ -178,7 +183,7 @@ export function useDraggableTabs<T>(tabs: Ref<T[]>, setSelectedTab: (tab: T) => 
 
             if (width === '0px') return lastGhostTab.remove();
 
-            lastGhostTab.style.width = '0px';
+            lastGhostTab.style.minWidth = '0px';
 
             const removeElement = () => {
                 lastGhostTab.removeEventListener('transitionend', removeElement);

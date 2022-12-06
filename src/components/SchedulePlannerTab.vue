@@ -66,7 +66,8 @@ function onDragEnd(e: DragEvent) {
     @apply tab;
     @apply tab-lg;
     @apply tab-lifted;
-    
+    @apply flex-nowrap;
+    @apply whitespace-nowrap;
     &.tab-active:first-child:before {
         background-image: var(--tab-corner-bg);
     }
