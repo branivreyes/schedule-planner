@@ -138,6 +138,7 @@ const { onDrag, onDragStart, onDragEnd } = useDraggableTabs(tabs, setSelectedTab
         @apply items-center;
         @apply ml-5;
         @apply cursor-pointer;
+        @apply pr-5;
 
         .icon {
             width: 24px !important;
