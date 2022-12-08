@@ -34,7 +34,7 @@
 <script lang="ts" setup>
 import SchedulePlannerTab from './SchedulePlannerTab.vue';
 import Tab from '@classes/Tab';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useDraggableTabs } from '@composables/draggableTabs';
 
 const tabs = ref<Tab[]>([
@@ -46,6 +46,16 @@ const tabs = ref<Tab[]>([
 const selectedTab = ref(tabs.value[0]);
 const addSearchTabElement = ref<HTMLAnchorElement | null>(null);
 const tabsContainer = ref<HTMLDivElement | null>(null);
+
+onMounted(() => {
+    tabsContainer.value?.addEventListener('wheel', (e: WheelEvent) => {
+        tabsContainer.value!.scrollLeft += e.deltaY;
+    });
+    
+    tabsContainer.value?.addEventListener('scroll', (e) => {
+        moveDraggingTab();
+    });
+});
 
 function onTabClick(tab: Tab) {
     setSelectedTab(tab);
@@ -85,7 +95,7 @@ function getScrollPosition() {
     return tabsContainer.value?.scrollLeft || 0;    
 }
 
-const { onDrag, onDragStart, onDragEnd } = useDraggableTabs(tabs, setSelectedTab, getMaxXposition, getScrollPosition);
+const { onDrag, onDragStart, onDragEnd, moveDraggingTab } = useDraggableTabs(tabs, setSelectedTab, getMaxXposition, getScrollPosition);
 </script>
 
 <style lang="scss" scoped>
@@ -103,7 +113,11 @@ const { onDrag, onDragStart, onDragEnd } = useDraggableTabs(tabs, setSelectedTab
         @apply relative;
         @apply overflow-hidden;
         @apply max-w-full;
-        @apply overflow-x-auto;
+        @apply overflow-x-hidden;
+        
+        &:hover {
+            @apply overflow-x-auto;
+        }
         
         &::-webkit-scrollbar {
             height: 4px;

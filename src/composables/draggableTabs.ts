@@ -15,6 +15,7 @@ export function useDraggableTabs<T>(
     let firstIteration = true;
     let ghostTabs: HTMLElement[] = [];
     let maxXPosition: number;
+    let clientX = 0;
     
     function onDragStart(e: DragEvent, tab: T) {
         draggingTabElement = e.target as HTMLAnchorElement;
@@ -26,7 +27,7 @@ export function useDraggableTabs<T>(
         
         ghostTabIndex = draggingTabIndex;
 
-        const clientX = e.clientX;
+        clientX = e.clientX;
 
         setSelectedTab(tab);
         
@@ -38,7 +39,7 @@ export function useDraggableTabs<T>(
 
         maxXPosition = getMaxXPosition();
         
-        moveDraggingTab(clientX);
+        moveDraggingTab();
 
         setDraggingTabStyles();
         
@@ -46,7 +47,7 @@ export function useDraggableTabs<T>(
     }
     
     function onDrag(e: DragEvent) {
-        const clientX = e.clientX;
+        clientX = e.clientX;
 
         if (clientX === 0) return;
 
@@ -55,7 +56,7 @@ export function useDraggableTabs<T>(
 
         firstIteration = false;
 
-        moveDraggingTab(clientX);
+        moveDraggingTab();
         
         tabBehind = getTabBehind(clientX);
         
@@ -146,11 +147,13 @@ export function useDraggableTabs<T>(
         return left + (width / 2);
     }
 
-    function moveDraggingTab(clientX: number) {
+    function moveDraggingTab() {
+        if (!draggingTabElement) return;
+        
         const draggingTabStyle = draggingTabElement!.style;
         const virtualTab = clientX + (draggingTabDomRect.width - offsetX);
-        
-        if (virtualTab > maxXPosition || clientX <= offsetX) return;
+
+        if (virtualTab > maxXPosition || (clientX + getScrollPosition()) <= offsetX) return;
         
         draggingTabStyle.left = Math.round((clientX - offsetX) + getScrollPosition()) + 'px';
     }
@@ -199,5 +202,6 @@ export function useDraggableTabs<T>(
         onDragStart,
         onDrag,
         onDragEnd,
+        moveDraggingTab,
     }
 }
