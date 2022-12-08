@@ -1,10 +1,10 @@
-import { Ref } from 'vue';
+import { Ref, onMounted } from 'vue';
 
 export function useDraggableTabs<T>(
     tabs: Ref<T[]>,
     setSelectedTab: (tab: T) => void,
     getMaxXPosition: () => number,
-    getScrollPosition: () => number
+    tabsElementContainer: Ref<HTMLElement | null>
 ) {
     let offsetX = 0;
     let draggingTabElement: HTMLAnchorElement | undefined;
@@ -16,6 +16,16 @@ export function useDraggableTabs<T>(
     let ghostTabs: HTMLElement[] = [];
     let maxXPosition: number;
     let clientX = 0;
+
+    onMounted(() => {
+        tabsElementContainer.value?.addEventListener('wheel', (e: WheelEvent) => {
+            tabsElementContainer.value!.scrollLeft += e.deltaY;
+        });
+        
+        tabsElementContainer.value?.addEventListener('scroll', (e) => {
+            moveDraggingTab();
+        });
+    });
     
     function onDragStart(e: DragEvent, tab: T) {
         draggingTabElement = e.target as HTMLAnchorElement;
@@ -197,11 +207,14 @@ export function useDraggableTabs<T>(
         } else
             lastGhostTab.remove();
     }
+
+    function getScrollPosition() {
+        return tabsElementContainer.value?.scrollLeft || 0;    
+    }
     
     return {
         onDragStart,
         onDrag,
         onDragEnd,
-        moveDraggingTab,
     }
 }
