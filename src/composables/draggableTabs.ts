@@ -71,20 +71,6 @@ export function useDraggableTabs<T>(
         firstIteration = false;
 
         moveDraggingTab();
-        
-        tabBehind = getTabBehind(clientX);
-        
-        if (!tabBehind) return;
-
-        const newGhostTabIndex = getNewGhostTabIndex(
-            clientX,
-            Number(tabBehind.dataset.tabindex),
-            getTabMiddleX(tabBehind)
-        );
-        
-        if (ghostTabIndex === newGhostTabIndex) return;
-        
-        insertNewGhostTab(newGhostTabIndex);
     }
 
     function onDragEnd(tab: T) {
@@ -168,9 +154,26 @@ export function useDraggableTabs<T>(
         const virtualTab = clientX + (draggingTabDomRect.width - offsetX);
         const virtualMaxXPosition = maxXPosition - (scrollPosition - initialScrollPosition);
 
-        if (virtualTab > virtualMaxXPosition || (clientX + scrollPosition) <= offsetX) return;
+        if (virtualTab <= virtualMaxXPosition && (clientX + scrollPosition) > offsetX)
+            draggingTabStyle.left = Math.round((clientX - offsetX) + scrollPosition) + 'px';
+        
+        checkForNewGhostTab();
+    }
+    
+    function checkForNewGhostTab() {
+        tabBehind = getTabBehind(clientX);
+        
+        if (!tabBehind) return;
 
-        draggingTabStyle.left = Math.round((clientX - offsetX) + scrollPosition) + 'px';
+        const newGhostTabIndex = getNewGhostTabIndex(
+            clientX,
+            Number(tabBehind.dataset.tabindex),
+            getTabMiddleX(tabBehind)
+        );
+        
+        if (ghostTabIndex === newGhostTabIndex) return;
+        
+        insertNewGhostTab(newGhostTabIndex);
     }
 
     function createNewGhostTab() {
