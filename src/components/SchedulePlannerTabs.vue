@@ -38,10 +38,10 @@ import { ref } from 'vue';
 import { useDraggableTabs } from '@composables/draggableTabs';
 
 const tabs = ref<Tab[]>([
+    new Tab('Foo'),
+    new Tab('Bar'),
+    new Tab('Baz'),
     new Tab('Search tab'),
-    new Tab('Lorem Ipsum'),
-    new Tab('Baz Lorem'),
-    new Tab('Foo Foo Lorem Baz Bar'),
 ]);
 const selectedTab = ref(tabs.value[0]);
 const addSearchTabElement = ref<HTMLAnchorElement | null>(null);

@@ -16,13 +16,16 @@ export function useDraggableTabs<T>(
     let ghostTabs: HTMLElement[] = [];
     let maxXPosition: number;
     let clientX = 0;
-
+    let scrollPosition = 0;
+    let initialScrollPosition = 0;
+    
     onMounted(() => {
         tabsElementContainer.value?.addEventListener('wheel', (e: WheelEvent) => {
             tabsElementContainer.value!.scrollLeft += e.deltaY;
         });
         
-        tabsElementContainer.value?.addEventListener('scroll', (e) => {
+        tabsElementContainer.value?.addEventListener('scroll', () => {
+            scrollPosition = tabsElementContainer.value!.scrollLeft;
             moveDraggingTab();
         });
     });
@@ -48,6 +51,7 @@ export function useDraggableTabs<T>(
         offsetX = clientX - draggingTabDomRect.left;
 
         maxXPosition = getMaxXPosition();
+        initialScrollPosition = scrollPosition;
         
         moveDraggingTab();
 
@@ -156,16 +160,17 @@ export function useDraggableTabs<T>(
         const { left, width } = element.getBoundingClientRect();
         return left + (width / 2);
     }
-
+    
     function moveDraggingTab() {
         if (!draggingTabElement) return;
         
         const draggingTabStyle = draggingTabElement!.style;
         const virtualTab = clientX + (draggingTabDomRect.width - offsetX);
+        const virtualMaxXPosition = maxXPosition - (scrollPosition - initialScrollPosition);
 
-        if (virtualTab > maxXPosition || (clientX + getScrollPosition()) <= offsetX) return;
-        
-        draggingTabStyle.left = Math.round((clientX - offsetX) + getScrollPosition()) + 'px';
+        if (virtualTab > virtualMaxXPosition || (clientX + scrollPosition) <= offsetX) return;
+
+        draggingTabStyle.left = Math.round((clientX - offsetX) + scrollPosition) + 'px';
     }
 
     function createNewGhostTab() {
@@ -206,10 +211,6 @@ export function useDraggableTabs<T>(
             lastGhostTab.addEventListener('transitionend', removeElement);
         } else
             lastGhostTab.remove();
-    }
-
-    function getScrollPosition() {
-        return tabsElementContainer.value?.scrollLeft || 0;    
     }
     
     return {
