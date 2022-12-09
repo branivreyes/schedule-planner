@@ -7,7 +7,7 @@ export function useDraggableTabs<T>(
     tabsElementContainer: Ref<HTMLElement | null>
 ) {
     let offsetX = 0;
-    let draggingTabElement: HTMLAnchorElement | undefined;
+    let draggingTabElement: HTMLElement | undefined;
     let draggingTabDomRect: DOMRect;
     let ghostTabIndex: number;
     let tabBehind: HTMLElement | undefined;
