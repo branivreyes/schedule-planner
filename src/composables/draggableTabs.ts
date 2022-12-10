@@ -65,10 +65,10 @@ export function useDraggableTabs<T>(
 
         if (clientX === 0) return;
 
-        if (firstIteration)
+        if (firstIteration) {
             draggingTabElement!.style.pointerEvents = 'none';
-
-        firstIteration = false;
+            firstIteration = false;
+        }
 
         moveDraggingTab();
     }
@@ -88,6 +88,41 @@ export function useDraggableTabs<T>(
         draggingTabElement = undefined;
         tabBehind = undefined;
     }
+
+    function moveDraggingTab() {
+        if (!draggingTabElement) return;
+        
+        const draggingTabStyle = draggingTabElement!.style;
+        const virtualTab = clientX + (draggingTabDomRect.width - offsetX);
+        const virtualMaxXPosition = maxXPosition - (scrollPosition - initialScrollPosition);
+
+        if (virtualTab <= virtualMaxXPosition && (clientX + scrollPosition) > offsetX)
+            draggingTabStyle.left = Math.round((clientX - offsetX) + scrollPosition) + 'px';
+        
+        checkForNewGhostTab();
+    }
+
+    function checkForNewGhostTab() {
+        tabBehind = getTabBehind(clientX);
+        
+        if (!tabBehind) return;
+
+        const newGhostTabIndex = getNewGhostTabIndex(
+            clientX,
+            Number(tabBehind.dataset.tabindex),
+            getTabMiddleX(tabBehind)
+        );
+        
+        if (ghostTabIndex === newGhostTabIndex) return;
+        
+        insertNewGhostTab(newGhostTabIndex);
+    }
+
+    function getTabBehind(clientX: number) {
+        const elementBehind = document.elementFromPoint(clientX, draggingTabDomRect.top) as HTMLElement;
+        
+        return elementBehind?.dataset?.tabindex ? elementBehind : undefined;
+    }
     
     function getNewGhostTabIndex(
         clientX:number,
@@ -103,6 +138,11 @@ export function useDraggableTabs<T>(
             newGhostTabIndex--;
         
         return newGhostTabIndex;
+    }
+
+    function getTabMiddleX(element: HTMLElement) {
+        const { left, width } = element.getBoundingClientRect();
+        return left + (width / 2);
     }
 
     function insertNewGhostTab(newGhostTabIndex?: number) {
@@ -129,70 +169,6 @@ export function useDraggableTabs<T>(
         
         ghostTabs.push(ghostTab);
     }
-    
-    function setDraggingTabStyles() {
-        const style = draggingTabElement!.style;
-        style.position = 'absolute';
-        style.zIndex = '1';
-    }
-    
-    function setDragImage(e: DragEvent) {
-        const img = new Image();
-        img.src = 'empty.svg';
-        e.dataTransfer?.setDragImage(img, 0, 0);
-    }
-
-    function getTabMiddleX(element: HTMLElement) {
-        const { left, width } = element.getBoundingClientRect();
-        return left + (width / 2);
-    }
-    
-    function moveDraggingTab() {
-        if (!draggingTabElement) return;
-        
-        const draggingTabStyle = draggingTabElement!.style;
-        const virtualTab = clientX + (draggingTabDomRect.width - offsetX);
-        const virtualMaxXPosition = maxXPosition - (scrollPosition - initialScrollPosition);
-
-        if (virtualTab <= virtualMaxXPosition && (clientX + scrollPosition) > offsetX)
-            draggingTabStyle.left = Math.round((clientX - offsetX) + scrollPosition) + 'px';
-        
-        checkForNewGhostTab();
-    }
-    
-    function checkForNewGhostTab() {
-        tabBehind = getTabBehind(clientX);
-        
-        if (!tabBehind) return;
-
-        const newGhostTabIndex = getNewGhostTabIndex(
-            clientX,
-            Number(tabBehind.dataset.tabindex),
-            getTabMiddleX(tabBehind)
-        );
-        
-        if (ghostTabIndex === newGhostTabIndex) return;
-        
-        insertNewGhostTab(newGhostTabIndex);
-    }
-
-    function createNewGhostTab() {
-        const ghostTab = document.createElement('DIV') as HTMLDivElement;
-        ghostTab.classList.add('h-12');
-        
-        const style = ghostTab.style;
-        style.minWidth = '0px';
-        style.transition = 'min-width .2s linear';
-        style.willChange = 'min-width';
-
-        return ghostTab;
-    }
-
-    function getTabBehind(clientX: number) {
-        const elementBehind = document.elementFromPoint(clientX, draggingTabDomRect.top) as HTMLElement;
-        
-        return elementBehind?.dataset?.tabindex ? elementBehind : undefined;
-    }
 
     function removeLastGhostTab(withAnimation = true) {
         const lastGhostTab = ghostTabs.pop();
@@ -215,7 +191,31 @@ export function useDraggableTabs<T>(
         } else
             lastGhostTab.remove();
     }
+
+    function createNewGhostTab() {
+        const ghostTab = document.createElement('DIV') as HTMLDivElement;
+        ghostTab.classList.add('h-12');
+        
+        const style = ghostTab.style;
+        style.minWidth = '0px';
+        style.transition = 'min-width .2s linear';
+        style.willChange = 'min-width';
+
+        return ghostTab;
+    }
     
+    function setDraggingTabStyles() {
+        const style = draggingTabElement!.style;
+        style.position = 'absolute';
+        style.zIndex = '1';
+    }
+    
+    function setDragImage(e: DragEvent) {
+        const img = new Image();
+        img.src = 'empty.svg';
+        e.dataTransfer?.setDragImage(img, 0, 0);
+    }
+
     return {
         onDragStart,
         onDrag,
