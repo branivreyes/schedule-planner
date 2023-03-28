@@ -1,3 +1,3 @@
 export default interface Tab {
-    name: string;
+  name: string;
 }

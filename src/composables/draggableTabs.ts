@@ -1,224 +1,222 @@
-import { Ref, onMounted } from 'vue';
+import { Ref, onMounted } from "vue";
 
 export function useDraggableTabs<T>(
-    tabs: Ref<T[]>,
-    setSelectedTab: (tab: T) => void,
-    getMaxXPosition: () => number,
-    tabsElementContainer: Ref<HTMLElement | null>
+  tabs: Ref<T[]>,
+  setSelectedTab: (tab: T) => void,
+  getMaxXPosition: () => number,
+  tabsElementContainer: Ref<HTMLElement | null>
 ) {
-    let offsetX = 0;
-    let draggingTabElement: HTMLElement | undefined;
-    let draggingTabDomRect: DOMRect;
-    let ghostTabIndex: number;
-    let tabBehind: HTMLElement | undefined;
-    let draggingTabIndex: number;
-    let firstIteration = true;
-    let ghostTabs: HTMLElement[] = [];
-    let maxXPosition: number;
-    let clientX = 0;
-    let scrollPosition = 0;
-    let initialScrollPosition = 0;
-    
-    onMounted(() => {
-        tabsElementContainer.value?.addEventListener('wheel', (e: WheelEvent) => {
-            tabsElementContainer.value!.scrollLeft += e.deltaY;
-        });
-        
-        tabsElementContainer.value?.addEventListener('scroll', () => {
-            scrollPosition = tabsElementContainer.value!.scrollLeft;
-            moveDraggingTab();
-        });
+  let offsetX = 0;
+  let draggingTabElement: HTMLElement | undefined;
+  let draggingTabDomRect: DOMRect;
+  let ghostTabIndex: number;
+  let tabBehind: HTMLElement | undefined;
+  let draggingTabIndex: number;
+  let firstIteration = true;
+  let ghostTabs: HTMLElement[] = [];
+  let maxXPosition: number;
+  let clientX = 0;
+  let scrollPosition = 0;
+  let initialScrollPosition = 0;
+
+  onMounted(() => {
+    tabsElementContainer.value?.addEventListener("wheel", (e: WheelEvent) => {
+      tabsElementContainer.value!.scrollLeft += e.deltaY;
     });
-    
-    function onDragStart(e: DragEvent, tab: T) {
-        draggingTabElement = e.target as HTMLAnchorElement;
-        
-        draggingTabIndex = Number(draggingTabElement?.dataset?.tabindex);
-        
-        if (isNaN(draggingTabIndex))
-            return e.preventDefault();
-        
-        ghostTabIndex = draggingTabIndex;
 
-        clientX = e.clientX;
+    tabsElementContainer.value?.addEventListener("scroll", () => {
+      scrollPosition = tabsElementContainer.value!.scrollLeft;
+      moveDraggingTab();
+    });
+  });
 
-        setSelectedTab(tab);
-        
-        setDragImage(e);
-        
-        draggingTabDomRect = draggingTabElement.getBoundingClientRect();
-        
-        offsetX = clientX - draggingTabDomRect.left;
+  function onDragStart(e: DragEvent, tab: T) {
+    draggingTabElement = e.target as HTMLAnchorElement;
 
-        maxXPosition = getMaxXPosition();
-        initialScrollPosition = scrollPosition;
-        
-        moveDraggingTab();
+    draggingTabIndex = Number(draggingTabElement?.dataset?.tabindex);
 
-        setDraggingTabStyles();
-        
-        insertNewGhostTab();
-    }
-    
-    function onDrag(e: DragEvent) {
-        clientX = e.clientX;
+    if (isNaN(draggingTabIndex)) return e.preventDefault();
 
-        if (clientX === 0) return;
+    ghostTabIndex = draggingTabIndex;
 
-        if (firstIteration) {
-            draggingTabElement!.style.pointerEvents = 'none';
-            firstIteration = false;
-        }
+    clientX = e.clientX;
 
-        moveDraggingTab();
-    }
+    setSelectedTab(tab);
 
-    function onDragEnd(tab: T) {
-        removeLastGhostTab(false);
-        
-        draggingTabElement?.removeAttribute('style');
+    setDragImage(e);
 
-        if (draggingTabIndex !== ghostTabIndex && ghostTabIndex !== undefined) {
-            tabs.value.splice(draggingTabIndex, 1);
-            tabs.value.splice(ghostTabIndex!, 0, tab);
-        }
-        
-        firstIteration = true;
-        ghostTabs = [];
-        draggingTabElement = undefined;
-        tabBehind = undefined;
+    draggingTabDomRect = draggingTabElement.getBoundingClientRect();
+
+    offsetX = clientX - draggingTabDomRect.left;
+
+    maxXPosition = getMaxXPosition();
+    initialScrollPosition = scrollPosition;
+
+    moveDraggingTab();
+
+    setDraggingTabStyles();
+
+    insertNewGhostTab();
+  }
+
+  function onDrag(e: DragEvent) {
+    clientX = e.clientX;
+
+    if (clientX === 0) return;
+
+    if (firstIteration) {
+      draggingTabElement!.style.pointerEvents = "none";
+      firstIteration = false;
     }
 
-    function moveDraggingTab() {
-        if (!draggingTabElement) return;
-        
-        const draggingTabStyle = draggingTabElement!.style;
-        const virtualTab = clientX + (draggingTabDomRect.width - offsetX);
-        const virtualMaxXPosition = maxXPosition - (scrollPosition - initialScrollPosition);
+    moveDraggingTab();
+  }
 
-        if (virtualTab <= virtualMaxXPosition && (clientX + scrollPosition) > offsetX)
-            draggingTabStyle.left = Math.round((clientX - offsetX) + scrollPosition) + 'px';
-        
-        checkForNewGhostTab();
+  function onDragEnd(tab: T) {
+    removeLastGhostTab(false);
+
+    draggingTabElement?.removeAttribute("style");
+
+    if (draggingTabIndex !== ghostTabIndex && ghostTabIndex !== undefined) {
+      tabs.value.splice(draggingTabIndex, 1);
+      tabs.value.splice(ghostTabIndex!, 0, tab);
     }
 
-    function checkForNewGhostTab() {
-        tabBehind = getTabBehind(clientX);
-        
-        if (!tabBehind) return;
+    firstIteration = true;
+    ghostTabs = [];
+    draggingTabElement = undefined;
+    tabBehind = undefined;
+  }
 
-        const newGhostTabIndex = getNewGhostTabIndex(
-            clientX,
-            Number(tabBehind.dataset.tabindex),
-            getTabMiddleX(tabBehind)
-        );
-        
-        if (ghostTabIndex === newGhostTabIndex) return;
-        
-        insertNewGhostTab(newGhostTabIndex);
+  function moveDraggingTab() {
+    if (!draggingTabElement) return;
+
+    const draggingTabStyle = draggingTabElement!.style;
+    const virtualTab = clientX + (draggingTabDomRect.width - offsetX);
+    const virtualMaxXPosition =
+      maxXPosition - (scrollPosition - initialScrollPosition);
+
+    if (virtualTab <= virtualMaxXPosition && clientX + scrollPosition > offsetX)
+      draggingTabStyle.left =
+        Math.round(clientX - offsetX + scrollPosition) + "px";
+
+    checkForNewGhostTab();
+  }
+
+  function checkForNewGhostTab() {
+    tabBehind = getTabBehind(clientX);
+
+    if (!tabBehind) return;
+
+    const newGhostTabIndex = getNewGhostTabIndex(
+      clientX,
+      Number(tabBehind.dataset.tabindex),
+      getTabMiddleX(tabBehind)
+    );
+
+    if (ghostTabIndex === newGhostTabIndex) return;
+
+    insertNewGhostTab(newGhostTabIndex);
+  }
+
+  function getTabBehind(clientX: number) {
+    const elementBehind = document.elementFromPoint(
+      clientX,
+      draggingTabDomRect.top
+    ) as HTMLElement;
+
+    return elementBehind?.dataset?.tabindex ? elementBehind : undefined;
+  }
+
+  function getNewGhostTabIndex(
+    clientX: number,
+    tabBehindIndex: number,
+    tabBehindMiddleX: number
+  ) {
+    let newGhostTabIndex = tabBehindIndex;
+
+    if (clientX >= tabBehindMiddleX && newGhostTabIndex < draggingTabIndex)
+      newGhostTabIndex++;
+
+    if (clientX < tabBehindMiddleX && newGhostTabIndex > draggingTabIndex)
+      newGhostTabIndex--;
+
+    return newGhostTabIndex;
+  }
+
+  function getTabMiddleX(element: HTMLElement) {
+    const { left, width } = element.getBoundingClientRect();
+    return left + width / 2;
+  }
+
+  function insertNewGhostTab(newGhostTabIndex?: number) {
+    removeLastGhostTab();
+
+    const ghostTab = createNewGhostTab();
+
+    if (newGhostTabIndex === undefined) draggingTabElement!.before(ghostTab);
+    else if (newGhostTabIndex > ghostTabIndex) tabBehind!.after(ghostTab);
+    else tabBehind!.before(ghostTab);
+
+    if (newGhostTabIndex !== undefined) {
+      ghostTab.getBoundingClientRect();
+
+      ghostTabIndex = newGhostTabIndex;
     }
 
-    function getTabBehind(clientX: number) {
-        const elementBehind = document.elementFromPoint(clientX, draggingTabDomRect.top) as HTMLElement;
-        
-        return elementBehind?.dataset?.tabindex ? elementBehind : undefined;
-    }
-    
-    function getNewGhostTabIndex(
-        clientX:number,
-        tabBehindIndex: number,
-        tabBehindMiddleX: number
-    ) {
-        let newGhostTabIndex = tabBehindIndex;
-        
-        if (clientX >= tabBehindMiddleX && newGhostTabIndex < draggingTabIndex)
-            newGhostTabIndex++;
+    ghostTab.style.minWidth = Math.round(draggingTabDomRect.width) + "px";
 
-        if (clientX < tabBehindMiddleX && newGhostTabIndex > draggingTabIndex)
-            newGhostTabIndex--;
-        
-        return newGhostTabIndex;
-    }
+    ghostTabs.push(ghostTab);
+  }
 
-    function getTabMiddleX(element: HTMLElement) {
-        const { left, width } = element.getBoundingClientRect();
-        return left + (width / 2);
-    }
+  function removeLastGhostTab(withAnimation = true) {
+    const lastGhostTab = ghostTabs.pop();
 
-    function insertNewGhostTab(newGhostTabIndex?: number) {
-        removeLastGhostTab();
+    if (!lastGhostTab) return;
 
-        const ghostTab = createNewGhostTab();
+    if (withAnimation) {
+      const width = window.getComputedStyle(lastGhostTab).width;
 
-        if (newGhostTabIndex === undefined) 
-            draggingTabElement!.before(ghostTab);
+      if (width === "0px") return lastGhostTab.remove();
 
-        else if (newGhostTabIndex > ghostTabIndex)
-            tabBehind!.after(ghostTab);
+      lastGhostTab.style.minWidth = "0px";
 
-        else
-            tabBehind!.before(ghostTab);
+      const removeElement = () => {
+        lastGhostTab.removeEventListener("transitionend", removeElement);
+        lastGhostTab.remove();
+      };
 
-        if (newGhostTabIndex !== undefined) {
-            ghostTab.getBoundingClientRect();
+      lastGhostTab.addEventListener("transitionend", removeElement);
+    } else lastGhostTab.remove();
+  }
 
-            ghostTabIndex = newGhostTabIndex;
-        }
+  function createNewGhostTab() {
+    const ghostTab = document.createElement("DIV") as HTMLDivElement;
+    ghostTab.classList.add("h-12");
 
-        ghostTab.style.minWidth = Math.round(draggingTabDomRect.width) + 'px';
-        
-        ghostTabs.push(ghostTab);
-    }
+    const style = ghostTab.style;
+    style.minWidth = "0px";
+    style.transition = "min-width .2s linear";
+    style.willChange = "min-width";
 
-    function removeLastGhostTab(withAnimation = true) {
-        const lastGhostTab = ghostTabs.pop();
+    return ghostTab;
+  }
 
-        if (!lastGhostTab) return;
-        
-        if (withAnimation) {
-            const width = window.getComputedStyle(lastGhostTab).width;
+  function setDraggingTabStyles() {
+    const style = draggingTabElement!.style;
+    style.position = "absolute";
+    style.zIndex = "1";
+  }
 
-            if (width === '0px') return lastGhostTab.remove();
+  function setDragImage(e: DragEvent) {
+    const img = new Image();
+    img.src = "empty.svg";
+    e.dataTransfer?.setDragImage(img, 0, 0);
+  }
 
-            lastGhostTab.style.minWidth = '0px';
-
-            const removeElement = () => {
-                lastGhostTab.removeEventListener('transitionend', removeElement);
-                lastGhostTab.remove();
-            };
-
-            lastGhostTab.addEventListener('transitionend', removeElement);
-        } else
-            lastGhostTab.remove();
-    }
-
-    function createNewGhostTab() {
-        const ghostTab = document.createElement('DIV') as HTMLDivElement;
-        ghostTab.classList.add('h-12');
-        
-        const style = ghostTab.style;
-        style.minWidth = '0px';
-        style.transition = 'min-width .2s linear';
-        style.willChange = 'min-width';
-
-        return ghostTab;
-    }
-    
-    function setDraggingTabStyles() {
-        const style = draggingTabElement!.style;
-        style.position = 'absolute';
-        style.zIndex = '1';
-    }
-    
-    function setDragImage(e: DragEvent) {
-        const img = new Image();
-        img.src = 'empty.svg';
-        e.dataTransfer?.setDragImage(img, 0, 0);
-    }
-
-    return {
-        onDragStart,
-        onDrag,
-        onDragEnd,
-    }
+  return {
+    onDragStart,
+    onDrag,
+    onDragEnd,
+  };
 }
