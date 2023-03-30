@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { ref, onMounted, computed } from "vue";
 import SchedulePlannerLeftPanel from "./SchedulePlannerLeftPanel.vue";
+import SchedulePlannerTable from "./SchedulePlannerTable.vue";
 import { useResizeElementWidth } from "@composables/resizeElement";
 import Tab from "@ts/classes/Tab";
 
@@ -41,12 +42,7 @@ onMounted(() => {
       class="divider divider-horizontal cursor-ew-resize mx-1"
     ></div>
 
-    <div
-      draggable="false"
-      class="grid h-full flex-grow card bg-slate-100 rounded-box place-items-center"
-    >
-      {{ tab.name }}
-    </div>
+    <SchedulePlannerTable />
   </div>
 </template>
 
